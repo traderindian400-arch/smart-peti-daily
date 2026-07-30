@@ -1,1 +1,52 @@
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { AppProvider } from './context/AppContext';
+import { useApp } from './hooks/useApp';
+import Sidebar from './components/layout/Sidebar';
+import BottomNav from './components/layout/BottomNav';
+import Toast from './components/ui/Toast';
 
+// Pages
+import Home from './pages/Home';
+import Chat from './pages/Chat';
+import AppBuilder from './pages/AppBuilder';
+import WebsiteBuilder from './pages/WebsiteBuilder';
+import Ebook from './pages/Ebook';
+import GameBuilder from './pages/GameBuilder';
+import Projects from './pages/Projects';
+import Settings from './pages/Settings';
+import Auth from './pages/Auth';
+
+function AppContent() {
+  const { user } = useApp();
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row">
+      <Sidebar />
+      <main className="flex-1 pb-20 md:pb-0 md:ml-[220px]">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/app" element={<AppBuilder />} />
+          <Route path="/website" element={<WebsiteBuilder />} />
+          <Route path="/ebook" element={<Ebook />} />
+          <Route path="/game" element={<GameBuilder />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/auth" element={<Auth />} />
+        </Routes>
+      </main>
+      <BottomNav />
+      <Toast />
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
+  );
+}
+
+export default App;
