@@ -1,1 +1,29 @@
+import { PROVIDERS } from './constants';
 
+// Simulated AI call – replace with real API calls
+export const callAI = async (prompt, providerId, getKey, showToast) => {
+  const key = getKey(providerId);
+  if (!key) {
+    throw new Error(`API key missing for ${providerId}`);
+  }
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 1200));
+
+  const provider = PROVIDERS.find(p => p.id === providerId);
+  return `✨ **SmartPeti AI Response** (${provider?.label || providerId})
+
+Thank you for your request! Here's what I can generate for you:
+
+**Analysis**: I understand you want to build something amazing.
+
+**Recommendations**:
+1. Start with a clear structure
+2. Define your core features
+3. Design a user-friendly interface
+
+**Generated Content**:
+${prompt.length > 20 ? `Based on "${prompt.slice(0, 60)}...", I suggest focusing on simplicity and user experience.` : 'Let me know more details so I can help you better!'}
+
+---
+*Powered by ${provider?.label || providerId}*`;
+};
