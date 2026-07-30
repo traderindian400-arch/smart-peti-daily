@@ -1,1 +1,131 @@
+import React, { createContext, useState, useEffect, useCallback } from 'react';
+import { storage } from '../utils/storage';
+import { PROVIDERS, LANGUAGES } from '../utils/constants';
+import { translations } from '../utils/translations';
+import { callAI } from '../utils/aiService';
 
+export const AppContext = createContext();
+
+export const AppProvider = ({ children }) => {
+  // ----- State -----
+  const [user, setUser] = useState(() => storage.get('user', null));
+  const [theme, setTheme] = useState(() => storage.get('theme', 'dark'));
+  const [language, setLanguage] = useState(() => storage.get('language', 'en'));
+  const [apiKeys, setApiKeys] = useState(() => storage.get('apiKeys', {}));
+  const [projects, setProjects] = useState(() => storage.get('projects', []));
+  const [chatHistory, setChatHistory] = useState(() => storage.get('chatHistory', []));
+  const [activeProvider, setActiveProvider] = useState(() => storage.get('activeProvider', 'openai'));
+  const [currentProject, setCurrentProject] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  // ----- Persistence -----
+  useEffect(() => { storage.set('theme', theme); }, [theme]);
+  useEffect(() => { storage.set('language', language); }, [language]);
+  useEffect(() => { storage.set('user', user); }, [user]);
+  useEffect(() => { storage.set('apiKeys', apiKeys); }, [apiKeys]);
+  useEffect(() => { storage.set('projects', projects); }, [projects]);
+  useEffect(() => { storage.set('chatHistory', chatHistory); }, [chatHistory]);
+  useEffect(() => { storage.set('activeProvider', activeProvider); }, [activeProvider]);
+
+  // ----- Toast -----
+  const showToast = useCallback((msg, type = 'success') => {
+    setToast({ msg, type });
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(() => setToast(null), 3000);
+  }, []);
+
+  // ----- Auth -----
+  const login = useCallback((email, password) => {
+    const users = storage.get('users', []);
+    const found = users.find(u => u.email === email && u.password === password);
+    if (found) { setUser(found);
+      showToast('Welcome back!'); return true; }
+    showToast('Invalid credentials', 'error');
+    return false;
+  }, [showToast]);
+
+  const register = useCallback((name, email, password) => {
+    const users = storage.get('users', []);
+    if (users.find(u => u.email === email)) {
+      showToast('Email already registered', 'error');
+      return false;
+    }
+    const newUser = { id: Date.now() + '', name, email, password, createdAt: new Date().toISOString() };
+    users.push(newUser);
+    storage.set('users', users);
+    setUser(newUser);
+    showToast('Account created!');
+    return true;
+  }, [showToast]);
+
+  const logout = useCallback(() => { setUser(null);
+    showToast('Logged out'); }, [showToast]);
+
+  // ----- Projects -----
+  const createProject = useCallback((data) => {
+    const p = { id: Date.now() + '', ...data, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+    setProjects(prev => [p, ...prev]);
+    return p;
+  }, []);
+
+  const updateProject = useCallback((id, data) => {
+    setProjects(prev => prev.map(p => p.id === id ? { ...p, ...data, updatedAt: new Date().toISOString() } : p));
+  }, []);
+
+  const deleteProject = useCallback((id) => {
+    setProjects(prev => prev.filter(p => p.id !== id));
+    if (currentProject?.id === id) setCurrentProject(null);
+  }, [currentProject]);
+
+  const duplicateProject = useCallback((id) => {
+    const p = projects.find(p => p.id === id);
+    if (!p) return;
+    const copy = { ...p, id: Date.now() + '', name: p.name + ' (copy)', createdAt: new Date().toISOString() };
+    setProjects(prev => [copy, ...prev]);
+  }, [projects]);
+
+  // ----- Chat -----
+  const addChatMessage = useCallback((role, content) => {
+    setChatHistory(prev => [...prev, { role, content, timestamp: Date.now() }]);
+  }, []);
+
+  // ----- AI -----
+  const getProviderKey = useCallback((providerId) => apiKeys[providerId] || '', [apiKeys]);
+
+  const t = useCallback((key) => {
+    return translations[language]?.[key] || translations.en[key] || key;
+  }, [language]);
+
+  const value = {
+    user,
+    login,
+    register,
+    logout,
+    theme,
+    setTheme,
+    language,
+    setLanguage,
+    apiKeys,
+    setApiKeys,
+    projects,
+    createProject,
+    updateProject,
+    deleteProject,
+    duplicateProject,
+    currentProject,
+    setCurrentProject,
+    chatHistory,
+    addChatMessage,
+    activeProvider,
+    setActiveProvider,
+    getProviderKey,
+    callAI: (prompt, provider) => callAI(prompt, provider || activeProvider, getProviderKey, showToast),
+    showToast,
+    toast,
+    t,
+    PROVIDERS,
+    LANGUAGES,
+  };
+
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+};
