@@ -1,1 +1,23 @@
-
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,jsx,ts,tsx}'],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      colors: {
+        accent: '#7c3aed',
+        'accent-hover': '#6d28d9',
+        'accent-light': '#a78bfa',
+        'bg-primary': 'var(--bg-primary)',
+        'bg-secondary': 'var(--bg-secondary)',
+        'bg-card': 'var(--bg-card)',
+        'bg-input': 'var(--bg-input)',
+        'text-primary': 'var(--text-primary)',
+        'text-secondary': 'var(--text-secondary)',
+        'text-muted': 'var(--text-muted)',
+        border: 'var(--border-color)',
+      },
+    },
+  },
+  plugins: [],
+};
