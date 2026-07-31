@@ -1,1 +1,68 @@
+import React, { useState } from 'react';
+import { useApp } from '../hooks/useApp';
+import { Button } from '../components/ui/Button';
+import { Input, Textarea } from '../components/ui/Input';
+import { Card } from '../components/ui/Card';
 
+export default function Projects() {
+  const { projects, deleteProject, duplicateProject, createProject, t, showToast } = useApp();
+  const [showNew, setShowNew] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+
+  const handleCreate = () => {
+    if (!newName.trim()) { showToast('Enter a name', 'error'); return; }
+    createProject({ name: newName.trim(), description: newDesc.trim(), type: 'general', content: '' });
+    setNewName('');
+    setNewDesc('');
+    setShowNew(false);
+    showToast('Project created!');
+  };
+
+  return (
+    <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h1 className="text-2xl font-bold flex items-center gap-2">📂 {t('projects')}</h1>
+        <Button onClick={() => setShowNew(!showNew)}>➕ {t('newProject')}</Button>
+      </div>
+
+      {showNew && (
+        <Card className="p-4 space-y-3">
+          <Input placeholder={t('projectName')} value={newName} onChange={(e) => setNewName(e.target.value)} />
+          <Textarea placeholder={t('description')} value={newDesc} onChange={(e) => setNewDesc(e.target.value)} rows={2} />
+          <div className="flex gap-2">
+            <Button onClick={handleCreate}>{t('save')}</Button>
+            <Button variant="secondary" onClick={() => { setShowNew(false);
+              setNewName('');
+              setNewDesc(''); }}>{t('cancel')}</Button>
+          </div>
+        </Card>
+      )}
+
+      {projects.length === 0 ? (
+        <Card className="p-12 text-center text-text-secondary">
+          <span className="text-6xl block mb-4">📭</span>
+          <p className="text-lg">{t('noProjects')}</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {projects.map(p => (
+            <Card key={p.id} className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold truncate">{p.name || 'Untitled'}</h3>
+                  <p className="text-sm text-text-muted truncate">{p.description || 'No description'}</p>
+                  <span className="text-[10px] text-text-muted">{new Date(p.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div className="flex gap-1 flex-shrink-0 ml-2">
+                  <button className="p-1.5 rounded hover:bg-bg-input" onClick={() => duplicateProject(p.id)} title={t('duplicate')}>📋</button>
+                  <button className="p-1.5 rounded hover:bg-bg-input text-red-400" onClick={() => { if (confirm('Delete?')) deleteProject(p.id); }} title={t('delete')}>🗑️</button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
