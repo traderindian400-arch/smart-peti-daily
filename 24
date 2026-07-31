@@ -1,1 +1,98 @@
+import React from 'react';
+import { useApp } from '../hooks/useApp';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Link } from 'react-router-dom';
 
+const features = [
+  { to: '/chat', icon: '💬', label: 'chat', desc: 'AI chat assistant' },
+  { to: '/app', icon: '📱', label: 'appBuilder', desc: 'Generate apps' },
+  { to: '/website', icon: '🌐', label: 'websiteBuilder', desc: 'Build websites' },
+  { to: '/ebook', icon: '📘', label: 'ebook', desc: 'eBooks & PDFs' },
+  { to: '/game', icon: '🎮', label: 'gameBuilder', desc: 'Create games' },
+  { to: '/projects', icon: '📂', label: 'projects', desc: 'Manage projects' },
+];
+
+export default function Home() {
+  const { user, projects, t } = useApp();
+  const recent = projects.slice(0, 4);
+
+  return (
+    <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-6">
+      {/* Welcome */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold">{t('welcome')}{user ? `, ${user.name || 'User'}` : ''}</h1>
+          <p className="text-text-secondary mt-1">{t('subtitle')}</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <Link to="/chat">
+            <Button><span>✨</span> {t('startChat')}</Button>
+          </Link>
+          <Link to="/projects">
+            <Button variant="secondary"><span>➕</span> {t('newProject')}</Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Features Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        {features.map(f => (
+          <Link key={f.to} to={f.to}>
+            <Card className="p-4 text-center hover:border-accent transition cursor-pointer h-full">
+              <div className="text-3xl mb-2">{f.icon}</div>
+              <div className="font-semibold text-sm">{t(f.label)}</div>
+              <div className="text-xs text-text-muted">{f.desc}</div>
+            </Card>
+          </Link>
+        ))}
+      </div>
+
+      {/* Recent Projects */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold">{t('projects')}</h2>
+          <Link to="/projects" className="text-sm text-accent hover:underline">View all</Link>
+        </div>
+        {recent.length === 0 ? (
+          <Card className="p-8 text-center text-text-secondary">
+            <p>{t('noProjects')}</p>
+            <Link to="/projects">
+              <Button className="mt-3"><span>➕</span> {t('newProject')}</Button>
+            </Link>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {recent.map(p => (
+              <Card key={p.id} className="p-4">
+                <h3 className="font-semibold truncate">{p.name || 'Untitled'}</h3>
+                <p className="text-xs text-text-muted mt-1 line-clamp-2">{p.description || 'No description'}</p>
+                <p className="text-[10px] text-text-muted mt-2">{new Date(p.createdAt).toLocaleDateString()}</p>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Provider Status */}
+      <Card className="p-4">
+        <div className="flex items-center gap-2 mb-2">
+          <span>⚙️</span>
+          <span className="text-sm font-medium">{t('providerStatus')}</span>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          {PROVIDERS.map(p => {
+            const hasKey = !!apiKeys[p.id];
+            return (
+              <div key={p.id} className="flex items-center gap-1.5 text-xs">
+                <span className={`w-2 h-2 rounded-full ${hasKey ? 'bg-green-400' : 'bg-red-400'}`} />
+                {p.label}
+                <span className="text-text-muted">{hasKey ? '✓' : '🔑'}</span>
+              </div>
+            );
+          })}
+        </div>
+      </Card>
+    </div>
+  );
+}
