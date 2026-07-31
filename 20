@@ -1,1 +1,33 @@
+import React from 'react';
+import { useApp } from '../../hooks/useApp';
+import { PROVIDERS } from '../../utils/constants';
 
+export default function ProviderSelector({ compact = false }) {
+  const { activeProvider, setActiveProvider, getProviderKey, t } = useApp();
+  return (
+    <div className={compact ? 'flex items-center gap-2' : 'space-y-2'}>
+      <label className="text-sm font-medium text-text-secondary">{t('selectProvider')}</label>
+      <div className="flex flex-wrap gap-2">
+        {PROVIDERS.map(p => {
+          const hasKey = !!getProviderKey(p.id);
+          return (
+            <button
+              key={p.id}
+              onClick={() => setActiveProvider(p.id)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                activeProvider === p.id
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-border bg-bg-input text-text-secondary hover:text-text-primary'
+              }`}
+            >
+              <span className="flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${hasKey ? 'bg-green-400' : 'bg-red-400'}`} />
+                {p.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
