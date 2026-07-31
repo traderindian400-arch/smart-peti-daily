@@ -1,1 +1,73 @@
+import React, { useState, useEffect } from 'react';
+import { useApp } from '../hooks/useApp';
+import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { PROVIDERS } from '../utils/constants';
+import ThemeToggle from '../components/ui/ThemeToggle';
+import LanguageSelector from '../components/ui/LanguageSelector';
 
+export default function Settings() {
+  const { apiKeys, setApiKeys, t, showToast } = useApp();
+  const [keys, setKeys] = useState(apiKeys);
+
+  useEffect(() => { setKeys(apiKeys); }, [apiKeys]);
+
+  const saveKeys = () => {
+    setApiKeys(keys);
+    showToast('API keys saved!');
+  };
+
+  return (
+    <div className="p-4 md:p-6 max-w-2xl mx-auto space-y-6">
+      <h1 className="text-2xl font-bold flex items-center gap-2">⚙️ {t('settings')}</h1>
+
+      <Card className="p-4">
+        <h3 className="font-semibold mb-2">{t('theme')}</h3>
+        <div className="flex items-center gap-4">
+          <ThemeToggle />
+          <span className="text-sm text-text-secondary">{t('dark')} / {t('light')}</span>
+        </div>
+      </Card>
+
+      <Card className="p-4">
+        <h3 className="font-semibold mb-2">{t('language')}</h3>
+        <LanguageSelector />
+      </Card>
+
+      <Card className="p-4">
+        <h3 className="font-semibold mb-2">🔑 {t('apiKey')}</h3>
+        <p className="text-sm text-text-secondary mb-3">Enter your API keys for each AI provider.</p>
+        <div className="space-y-3">
+          {PROVIDERS.map(p => (
+            <div key={p.id} className="space-y-1">
+              <label className="text-sm font-medium">{p.label}</label>
+              <Input
+                type="password"
+                placeholder={t('apiKeyPlaceholder')}
+                value={keys[p.id] || ''}
+                onChange={(e) => setKeys({ ...keys, [p.id]: e.target.value })}
+              />
+            </div>
+          ))}
+        </div>
+        <Button className="mt-3 w-full justify-center" onClick={saveKeys}>✅ {t('saveKey')}</Button>
+      </Card>
+
+      <Card className="p-4">
+        <h3 className="font-semibold mb-2">{t('providerStatus')}</h3>
+        <div className="space-y-1">
+          {PROVIDERS.map(p => (
+            <div key={p.id} className="flex items-center justify-between py-1 border-b border-border/50 last:border-0">
+              <span>{p.label}</span>
+              <span className={`text-sm flex items-center gap-1.5 ${apiKeys[p.id] ? 'text-green-400' : 'text-red-400'}`}>
+                <span className={`w-2 h-2 rounded-full ${apiKeys[p.id] ? 'bg-green-400' : 'bg-red-400'}`} />
+                {apiKeys[p.id] ? t('online') : t('offline')}
+              </span>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
