@@ -1,1 +1,82 @@
+import React, { useState } from 'react';
+import { useApp } from '../hooks/useApp';
+import { Button } from '../components/ui/Button';
+import { Textarea } from '../components/ui/Input';
+import { Card } from '../components/ui/Card';
 
+export default function WebsiteBuilder() {
+  const { t, callAI, showToast, createProject, user } = useApp();
+  const [idea, setIdea] = useState('');
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [type, setType] = useState('landing');
+
+  const types = [
+    { id: 'landing', label: 'Landing Page' },
+    { id: 'portfolio', label: 'Portfolio' },
+    { id: 'business', label: 'Business' },
+    { id: 'ecommerce', label: 'E-commerce' },
+  ];
+
+  const handleGenerate = async () => {
+    if (!idea.trim() || loading) return;
+    setLoading(true);
+    try {
+      const prompt = `Generate a professional ${type} website concept based on: "${idea}". Include:
+1. Website name & tagline
+2. Page structure (sitemap)
+3. Design style & color palette
+4. Key sections with content suggestions
+5. Technical stack
+6. SEO recommendations`;
+      const res = await callAI(prompt);
+      setResult(res);
+      if (user) {
+        createProject({ name: idea.slice(0, 40) + ' (Website)', description: idea, type: 'website', content: res });
+      }
+    } catch (err) { showToast(err.message, 'error'); }
+    setLoading(false);
+  };
+
+  return (
+    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
+      <h1 className="text-2xl font-bold flex items-center gap-2">🌐 {t('websiteBuilder')}</h1>
+      <p className="text-text-secondary">Generate a complete website concept with structure and design.</p>
+      <Card className="p-4 space-y-3">
+        <div className="flex flex-wrap gap-2">
+          {types.map(ty => (
+            <button
+              key={ty.id}
+              onClick={() => setType(ty.id)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium border transition ${
+                type === ty.id ? 'border-accent bg-accent/10 text-accent' : 'border-border bg-bg-input text-text-secondary'
+              }`}
+            >
+              {ty.label}
+            </button>
+          ))}
+        </div>
+        <label className="text-sm font-medium">{t('websiteIdea')}</label>
+        <Textarea
+          placeholder="e.g. A portfolio website for a freelance photographer..."
+          value={idea}
+          onChange={(e) => setIdea(e.target.value)}
+          rows={3}
+        />
+        <Button className="w-full justify-center" onClick={handleGenerate} disabled={loading || !idea.trim()}>
+          {loading ? t('generating') : <>✨ {t('generateWebsite')}</>}
+        </Button>
+      </Card>
+      {result && (
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold flex items-center gap-2">✅ {t('generated')}</h3>
+            <Button variant="ghost" onClick={() => { navigator.clipboard?.writeText(result);
+              showToast('Copied!'); }}>📋 {t('copy')}</Button>
+          </div>
+          <div className="text-sm whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: result.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+        </Card>
+      )}
+    </div>
+  );
+}
