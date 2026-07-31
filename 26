@@ -1,1 +1,61 @@
+import React, { useState } from 'react';
+import { useApp } from '../hooks/useApp';
+import { Button } from '../components/ui/Button';
+import { Textarea } from '../components/ui/Input';
+import { Card } from '../components/ui/Card';
 
+export default function AppBuilder() {
+  const { t, callAI, showToast, createProject, user } = useApp();
+  const [idea, setIdea] = useState('');
+  const [result, setResult] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleGenerate = async () => {
+    if (!idea.trim() || loading) return;
+    setLoading(true);
+    try {
+      const prompt = `Generate a complete mobile app concept based on: "${idea}". Include:
+1. App Name & Tagline
+2. Core Features (5-7 bullet points)
+3. UI/UX Design suggestions
+4. Technical stack recommendations
+5. Development roadmap
+6. Monetization strategy`;
+      const res = await callAI(prompt);
+      setResult(res);
+      if (user) {
+        createProject({ name: idea.slice(0, 40) + ' (App)', description: idea, type: 'app', content: res });
+      }
+    } catch (err) { showToast(err.message, 'error'); }
+    setLoading(false);
+  };
+
+  return (
+    <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-4">
+      <h1 className="text-2xl font-bold flex items-center gap-2">📱 {t('appBuilder')}</h1>
+      <p className="text-text-secondary">Describe your app idea and let AI generate a complete blueprint.</p>
+      <Card className="p-4 space-y-3">
+        <label className="text-sm font-medium">{t('appIdea')}</label>
+        <Textarea
+          placeholder="e.g. A fitness app that uses AI to create personalized workout plans..."
+          value={idea}
+          onChange={(e) => setIdea(e.target.value)}
+          rows={3}
+        />
+        <Button className="w-full justify-center" onClick={handleGenerate} disabled={loading || !idea.trim()}>
+          {loading ? t('generating') : <>✨ {t('generateApp')}</>}
+        </Button>
+      </Card>
+      {result && (
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold flex items-center gap-2">✅ {t('generated')}</h3>
+            <Button variant="ghost" onClick={() => { navigator.clipboard?.writeText(result);
+              showToast('Copied!'); }}>📋 {t('copy')}</Button>
+          </div>
+          <div className="text-sm whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: result.replace(/\n/g, '<br/>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+        </Card>
+      )}
+    </div>
+  );
+}
